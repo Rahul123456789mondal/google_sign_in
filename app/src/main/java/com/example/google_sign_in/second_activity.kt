@@ -5,9 +5,14 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.example.google_sign_in.databinding.ActivitySecondBinding
+import com.facebook.AccessToken
+import com.facebook.GraphRequest
+import com.facebook.GraphResponse
+import com.facebook.login.LoginManager
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import org.json.JSONObject
 
 
 class second_activity : AppCompatActivity() {
@@ -19,6 +24,10 @@ class second_activity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         secondBinding = ActivitySecondBinding.inflate(layoutInflater)
         setContentView(secondBinding.root)
+
+        // To Initialize the SharedPreference
+        val localData = SharedPreferenceManager(this)
+        val selectButtonValue = localData.fetchData("Login_Process-")
 
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestEmail()
@@ -38,17 +47,40 @@ class second_activity : AppCompatActivity() {
             val personPhoto: Uri? = acct.photoUrl
         }
 
+        val accessToken = AccessToken.getCurrentAccessToken()
+        val request = GraphRequest.newMeRequest(accessToken) { obj, _ ->
+            val name = obj?.getString("name")
+            secondBinding.name.text = name
+            val urlProfileImg = obj?.getJSONObject("picture")?.getJSONObject("data")?.getString("url")
+            secondBinding.email.text = urlProfileImg
+        }
+        val parameters = Bundle()
+        parameters.putString("fields", "id,name,link,picture.type(large)")
+        request.parameters = parameters
+        request.executeAsync()
+
         secondBinding.signout.setOnClickListener {
-            signOut()
+            if (selectButtonValue == "Google"){
+                googleSignOut()
+            }else{
+                facebookSignOut()
+            }
         }
     }
 
-    private fun signOut() {
+    private fun googleSignOut() {
         mGoogleSignInClient.signOut().addOnCompleteListener {
             finish()
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
         }
+    }
+
+    private fun facebookSignOut(){
+        LoginManager.getInstance().logOut()
+        finish()
+        val intent = Intent(this, MainActivity::class.java)
+        startActivity(intent)
     }
 
 }

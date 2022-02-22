@@ -1,3 +1,7 @@
 <resources>
-    <string name="app_name">google_sign_in</string>
+    <string name="app_name">sign_in</string>
+
+    <string name="facebook_app_id">537050751111872</string>
+    <string name="facebook_client_token">b12b392b03753674fac42df93bde511a</string>
+    <string name="fb_login_protocol_scheme">fb1234</string>
 </resources>
