@@ -27,14 +27,13 @@ class second_activity : AppCompatActivity() {
 
         // To Initialize the SharedPreference
         val localData = SharedPreferenceManager(this)
-        val selectButtonValue = localData.fetchData("Login_Process-")
+        val btnClickedValue = localData.fetchData("Login_Process-")
 
+        // Work on GOOGLE Login
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestEmail()
             .build()
-
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
-
         val acct = GoogleSignIn.getLastSignedInAccount(this)
         if (acct != null) {
             val personName = acct.displayName
@@ -47,6 +46,7 @@ class second_activity : AppCompatActivity() {
             val personPhoto: Uri? = acct.photoUrl
         }
 
+       /* // Work on Facebook Login
         val accessToken = AccessToken.getCurrentAccessToken()
         val request = GraphRequest.newMeRequest(accessToken) { obj, _ ->
             val name = obj?.getString("name")
@@ -57,15 +57,18 @@ class second_activity : AppCompatActivity() {
         val parameters = Bundle()
         parameters.putString("fields", "id,name,link,picture.type(large)")
         request.parameters = parameters
-        request.executeAsync()
+        request.executeAsync()*/
 
         secondBinding.signout.setOnClickListener {
-            if (selectButtonValue == "Google"){
-                googleSignOut()
-            }else{
-                facebookSignOut()
-            }
+            googleSignOut()
         }
+    }
+
+    private fun facebookSignOut(){
+        LoginManager.getInstance().logOut()
+        val intent = Intent(this, MainActivity::class.java)
+        startActivity(intent)
+        finish()
     }
 
     private fun googleSignOut() {
@@ -74,13 +77,6 @@ class second_activity : AppCompatActivity() {
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
         }
-    }
-
-    private fun facebookSignOut(){
-        LoginManager.getInstance().logOut()
-        finish()
-        val intent = Intent(this, MainActivity::class.java)
-        startActivity(intent)
     }
 
 }

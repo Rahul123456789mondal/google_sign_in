@@ -23,23 +23,14 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
 import java.security.MessageDigest
-import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var mainActivityBinding : ActivityMainBinding
     private lateinit var mGoogleSignInClient: GoogleSignInClient
-    lateinit var callbackManager: CallbackManager
+    private lateinit var callbackManager: CallbackManager
     private val RC_SIGN_IN = 9001
-
-    private val launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-            handleSignInResult(task)
-            navigateToNextPage()
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,23 +38,40 @@ class MainActivity : AppCompatActivity() {
         setContentView(mainActivityBinding.root)
         printHashKey(applicationContext)
 
-        val accessToken = AccessToken.getCurrentAccessToken()
-        if (accessToken!=null && !accessToken.isExpired){
+        /*//Hare we just checking the last Sign in Account
+        if (isLoggedIn()){
             navigateToNextPage()
-        }
+        }*/
 
         // To Initialize the SharedPreference
         val localData = SharedPreferenceManager(this)
 
-        //callbackManager to handle login responses by calling CallbackManager.Factory.create.
-        callbackManager = CallbackManager.Factory.create()
+        // Init google sign_in object
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestEmail()
+            .build()
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
+        // Hare we just checking the last Sign in Account
+        val acct = GoogleSignIn.getLastSignedInAccount(this)
+        if (acct == null) {
+            //navigateToNextPage()
+        }else{
+            navigateToNextPage()
+        }
+        mainActivityBinding.googleBtn.setOnClickListener {
+            localData.saveDataToSharedPreference("Login_Process-", "Google")
+            signIn()
+        }
 
+        //callbackManager to handle login responses by calling CallbackManager.Factory.create
+        callbackManager = CallbackManager.Factory.create()
         LoginManager.getInstance().registerCallback(callbackManager,
             object : FacebookCallback<LoginResult?> {
                 override fun onCancel() {
                 }
 
                 override fun onError(error: FacebookException) {
+                    error.printStackTrace()
                 }
 
                 override fun onSuccess(result: LoginResult?) {
@@ -72,28 +80,29 @@ class MainActivity : AppCompatActivity() {
 
             })
 
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
-            .build()
-
-        mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
-
-        mainActivityBinding.googleBtn.setOnClickListener {
-            localData.saveDataToSharedPreference("Login_Process-", "Google")
-            signIn()
-        }
-
         mainActivityBinding.facebookBtn.setOnClickListener {
             localData.saveDataToSharedPreference("Login_Process-", "Facebook")
             LoginManager.getInstance().logInWithReadPermissions(this, listOf("public_profile"));
         }
-
     }
 
+    //This Function used for checking the last Sign in Account
+    private fun isLoggedIn(): Boolean {
+        val accessToken = AccessToken.getCurrentAccessToken()
+        return accessToken != null && !accessToken.isExpired
+    }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         callbackManager.onActivityResult(requestCode, resultCode, data)
         super.onActivityResult(requestCode, resultCode, data)
+    }
+
+    private val launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            handleSignInResult(task)
+            navigateToNextPage()
+        }
     }
 
     private fun signIn() {
@@ -154,7 +163,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     private fun printHashKey(context: Context) {
 
         try {
@@ -173,4 +181,5 @@ class MainActivity : AppCompatActivity() {
         }
 
     }
+
 }
